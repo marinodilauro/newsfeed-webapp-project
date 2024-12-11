@@ -3,8 +3,19 @@ const API_KEY = '4a4ef5e334824ef789104f7876e4ea2a';
 const BASE_URL = 'https://newsapi.org/v2/everything';
 const TOP_HEADLINES_URL = 'https://newsapi.org/v2/top-headlines';
 
+// Categories Configuration
+const NEWS_CATEGORIES = [
+  { name: 'Technology', icon: 'laptop', category: 'technology' },
+  { name: 'Sports', icon: 'football-ball', category: 'sports' },
+  { name: 'Business', icon: 'chart-line', category: 'business' },
+  { name: 'Entertainment', icon: 'film', category: 'entertainment' },
+  { name: 'Health', icon: 'heartbeat', category: 'health' },
+  { name: 'Science', icon: 'flask', category: 'science' },
+  { name: 'General', icon: 'newspaper', category: 'general' }
+];
+
 // DOM Elements
-const categoryButtons = document.getElementById('category-buttons');
+const categoryButtonsContainer = document.getElementById('category-buttons');
 const articlesContainer = document.getElementById('articles-container');
 const loadingIndicator = document.getElementById('loading');
 const errorContainer = document.getElementById('error-container');
@@ -12,15 +23,32 @@ const articleModal = new bootstrap.Modal(document.getElementById('articleDetails
 const searchInput = document.getElementById('search-input');
 const searchButton = document.getElementById('search-button');
 
+// Initialize Categories Dynamically
+function initializeCategories() {
+  categoryButtonsContainer.innerHTML = NEWS_CATEGORIES.map(category => `
+        <button type="button" class="btn btn-outline-primary" data-category="${category.category}">
+            <i class="fas fa-${category.icon}"></i> ${category.name}
+        </button>
+    `).join('');
+}
+
 // Event Listeners
-categoryButtons.addEventListener('click', handleCategorySelection);
-searchButton.addEventListener('click', handleSearch);
-searchInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') handleSearch();
-});
+function addEventListeners() {
+  categoryButtonsContainer.addEventListener('click', handleCategorySelection);
+  searchButton.addEventListener('click', handleSearch);
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleSearch();
+  });
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize categories
+  initializeCategories();
+
+  // Add event listeners
+  addEventListeners();
+
   const savedCategory = sessionStorage.getItem('selectedCategory');
   if (savedCategory) {
     fetchNews(savedCategory);
@@ -56,7 +84,7 @@ function handleCategorySelection(event) {
 }
 
 function highlightActiveCategory(activeCategory) {
-  const buttons = categoryButtons.querySelectorAll('[data-category]');
+  const buttons = categoryButtonsContainer.querySelectorAll('[data-category]');
   buttons.forEach(button => {
     button.classList.toggle('active', button.dataset.category === activeCategory);
   });
@@ -76,7 +104,6 @@ async function fetchTopHeadlines() {
 
     const data = await response.json();
     displayNews(data.articles);
-    // console.log(data.articles);
   } catch (error) {
     displayError('Unable to fetch news. Please check your connection.');
     console.error('News fetch error:', error);
@@ -101,7 +128,7 @@ async function fetchNewsByKeyword(query) {
     const data = await response.json();
 
     // Clear any active category highlights
-    const buttons = categoryButtons.querySelectorAll('[data-category]');
+    const buttons = categoryButtonsContainer.querySelectorAll('[data-category]');
     buttons.forEach(button => button.classList.remove('active'));
 
     displayNews(data.articles);
@@ -128,7 +155,6 @@ async function fetchNews(category) {
 
     const data = await response.json();
     displayNews(data.articles);
-    console.log(data.articles);
   } catch (error) {
     displayError('Unable to fetch news. Please check your connection.');
     console.error('News fetch error:', error);
