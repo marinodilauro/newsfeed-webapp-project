@@ -172,12 +172,12 @@ function displayNews(articles) {
   articles.slice(0, 12).forEach(article => {
     const cardHTML = `
             <div class="col-md-4">
-                <div class="card article-card" data-bs-toggle="modal" data-bs-target="#articleDetailsModal">
+                <div class="card article-card d-flex flex-column" data-bs-toggle="modal" data-bs-target="#articleDetailsModal">
                     <img src="${article.urlToImage || 'https://via.placeholder.com/350x200'}" 
                          class="card-img-top article-image" alt="${article.title}">
                     <div class="card-body">
                         <h5 class="card-title">${article.title}</h5>
-                        <p class="card-text">${truncateText(article.description, 100)}</p>
+                        <p class="card-text flex-fill">${truncateText(article.description, 100)}</p>
                         <small class="text-muted">Source: ${article.source.name}</small>
                     </div>
                 </div>
