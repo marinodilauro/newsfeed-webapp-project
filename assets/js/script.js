@@ -1,6 +1,7 @@
+// API variables
 const API_KEY = '4a4ef5e334824ef789104f7876e4ea2a';
-const BASE_URL = 'https://newsapi.org/v2/top-headlines';
-
+const BASE_URL = 'https://newsapi.org/v2/everything';
+const TOP_HEADLINES_URL = 'https://newsapi.org/v2/top-headlines';
 
 // DOM Elements
 const categoryButtons = document.getElementById('category-buttons');
@@ -8,18 +9,36 @@ const articlesContainer = document.getElementById('articles-container');
 const loadingIndicator = document.getElementById('loading');
 const errorContainer = document.getElementById('error-container');
 const articleModal = new bootstrap.Modal(document.getElementById('articleDetailsModal'));
+const searchInput = document.getElementById('search-input');
+const searchButton = document.getElementById('search-button');
 
 // Event Listeners
 categoryButtons.addEventListener('click', handleCategorySelection);
+searchButton.addEventListener('click', handleSearch);
+searchInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') handleSearch();
+});
 
-
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   const savedCategory = sessionStorage.getItem('selectedCategory');
   if (savedCategory) {
     fetchNews(savedCategory);
     highlightActiveCategory(savedCategory);
+  } else {
+    // Fetch general top headlines if no saved category
+    fetchTopHeadlines();
   }
 });
+
+function handleSearch() {
+  const query = searchInput.value.trim();
+  if (!query) {
+    displayError('Please enter a search term');
+    return;
+  }
+  fetchNewsByKeyword(query);
+}
 
 function handleCategorySelection(event) {
   const categoryButton = event.target.closest('[data-category]');
@@ -31,6 +50,9 @@ function handleCategorySelection(event) {
 
   // Save to sessionStorage
   sessionStorage.setItem('selectedCategory', category);
+
+  // Clear search input
+  searchInput.value = '';
 }
 
 function highlightActiveCategory(activeCategory) {
@@ -40,6 +62,57 @@ function highlightActiveCategory(activeCategory) {
   });
 }
 
+async function fetchTopHeadlines() {
+  try {
+    loadingIndicator.classList.remove('d-none');
+    errorContainer.classList.add('d-none');
+    articlesContainer.innerHTML = '';
+
+    const response = await fetch(`${TOP_HEADLINES_URL}?country=us&apiKey=${API_KEY}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch top headlines');
+    }
+
+    const data = await response.json();
+    displayNews(data.articles);
+    // console.log(data.articles);
+  } catch (error) {
+    displayError('Unable to fetch news. Please check your connection.');
+    console.error('News fetch error:', error);
+  } finally {
+    loadingIndicator.classList.add('d-none');
+  }
+}
+
+async function fetchNewsByKeyword(query) {
+  try {
+    // Show loading indicator
+    loadingIndicator.classList.remove('d-none');
+    errorContainer.classList.add('d-none');
+    articlesContainer.innerHTML = '';
+
+    const response = await fetch(`${BASE_URL}?q=${encodeURIComponent(query)}&language=en&sortBy=relevancy&apiKey=${API_KEY}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch news by keyword');
+    }
+
+    const data = await response.json();
+
+    // Clear any active category highlights
+    const buttons = categoryButtons.querySelectorAll('[data-category]');
+    buttons.forEach(button => button.classList.remove('active'));
+
+    displayNews(data.articles);
+  } catch (error) {
+    displayError('Unable to fetch news. Please check your connection.');
+    console.error('News search error:', error);
+  } finally {
+    loadingIndicator.classList.add('d-none');
+  }
+}
+
 async function fetchNews(category) {
   try {
     // Show loading indicator
@@ -47,7 +120,7 @@ async function fetchNews(category) {
     errorContainer.classList.add('d-none');
     articlesContainer.innerHTML = '';
 
-    const response = await fetch(`${BASE_URL}?category=${category}&country=us&apiKey=${API_KEY}`);
+    const response = await fetch(`${TOP_HEADLINES_URL}?category=${category}&country=us&apiKey=${API_KEY}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch news');
@@ -55,6 +128,7 @@ async function fetchNews(category) {
 
     const data = await response.json();
     displayNews(data.articles);
+    console.log(data.articles);
   } catch (error) {
     displayError('Unable to fetch news. Please check your connection.');
     console.error('News fetch error:', error);
@@ -65,7 +139,7 @@ async function fetchNews(category) {
 
 function displayNews(articles) {
   if (!articles || articles.length === 0) {
-    displayError('No articles found for this category.');
+    displayError('No articles found.');
     return;
   }
 
@@ -91,6 +165,20 @@ function displayNews(articles) {
   articleCards.forEach((card, index) => {
     card.addEventListener('click', () => showArticleDetails(articles[index]));
   });
+}
+
+function showArticleDetails(article) {
+  const modalTitle = document.getElementById('modalArticleTitle');
+  const modalContent = document.getElementById('modalArticleContent');
+
+  modalTitle.textContent = article.title;
+  modalContent.innerHTML = `
+        <img src="${article.urlToImage || 'https://via.placeholder.com/800x400'}" 
+             class="img-fluid mb-3" alt="${article.title}">
+        <p>${article.description}</p>
+        <p>${article.content || 'No additional content available.'}</p>
+        <a href="${article.url}" target="_blank" class="btn btn-primary">Read Full Article</a>
+    `;
 }
 
 function displayError(message) {

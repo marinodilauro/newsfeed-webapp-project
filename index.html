@@ -34,12 +34,28 @@
     </div>
 
     <div class="container-fluid my-5">
-      <!-- Category Selection -->
+      <!-- Search and Category Section -->
       <div class="container">
         <div class="row mb-4">
           <div class="col-12">
+            <!-- Search Bar -->
+            <h2>Search everything</h2>
+            <div class="input-group mb-5">
+              <input
+                type="text"
+                id="search-input"
+                class="form-control"
+                placeholder="Search news articles..."
+                aria-label="Search news articles"
+                aria-describedby="search-button"
+              />
+              <button class="btn btn-primary" type="button" id="search-button">
+                <i class="fas fa-search"></i> Search
+              </button>
+            </div>
+
             <h2>Select Your News Categories</h2>
-            <div id="category-buttons" class="btn-group" role="group">
+            <div id="category-buttons" class="btn-group mb-5" role="group">
               <button
                 type="button"
                 class="btn btn-outline-primary"
